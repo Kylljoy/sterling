@@ -1,0 +1,255 @@
+import Math;
+
+class camera{
+	field x; //Left-Right
+	field y; //Forward-Back
+	field z; //Up-Down
+	field h_fov;
+	field v_fov;
+	field h_fov_tan;
+	field v_fov_tan;
+	field pjmat = [[1.0,0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,1.0]]; //Storage for pjmat indices are [ROW][COL] // 3x3 Matrix because storing 4x4 3D Matrices is only nice for pure math / dealing with Translation. Converted to 4x4 by the return function
+
+
+	constructor(x=0,y=0,z=0,h_fov=3.14/2,v_fov=3.14/2){
+		this.x=x;
+		this.y=y;
+		this.z=z;
+		this.h_fov=h_fov;
+		this.h_fov_tan=Math.tan(h_fov/2.0);
+		this.v_fov=v_fov;
+		this.v_fov_tan=Math.tan(v_fov/2.0);
+	
+	}
+	
+	function set__horizontal_fov(fov){
+		this.h_fov=fov;
+		this.h_fov_tan=Math.tan(fov/2.0);
+	}
+	
+	function set_vertical_fov(fov){
+		this.v_fov=fov;
+		this.v_fov_tan=Math.tan(fov/2.0);
+	}
+	
+	function change_x(x){
+		this.x+=x;
+	}
+	
+	function change_y(y){
+		this.y+=y;
+	}
+	
+	function change_z(z){
+		this.z+=z;
+	}
+	
+	function set_x(x){
+		this.x=x;
+	}
+	
+	function set_y(y){
+		this.y=y;
+	}
+	
+	function set_z(z){
+		this.z=z;
+	}
+	
+	function clone_mat_3d(mat){
+		mat_operation = [];
+		for(row_index=0;row_index<3;row_index++){
+			mat_operation.add(mat[row_index][::]);
+		}
+		return mat_operation;
+	}
+	
+	function get_pjmat(){ //Transition from a 3-dim matrix to a 4-dim matrix. I'm, like, 90% sure this will work
+		mat_operation = [[0.0,0.0,0.0,0.0],[0.0,0.0,0.0,0.0],[0.0,0.0,0.0,0.0]];
+		for(row_index=0;row_index<3;row_index++){
+			for(col_index=0;col_index<3;col_index++){
+				mat_operation[row_index][col_index]=this.pjmat[row_index][col_index];
+				mat_operation[row_index][3]=-(mat_operation[row_index][0]*this.x)-(mat_operation[row_index][1]*this.y)-(mat_operation[row_index][2]*this.z);
+			}
+		}
+		return mat_operation;
+	}
+	
+	function pj_view_space(x,y,z){ //Returns View Coordinates
+		pjmat_full=this.get_pjmat();
+		//Full Matrix multiplication is for COMMIES! We just do it straight in the list here
+		// X-Calc x*pjmat_full[0][0]+y*pjmat_full[0][1]+z*pjmat_full[0][2]+pjmat_full[0][3]
+		// Y-Calc x*pjmat_full[1][0]+y*pjmat_full[1][1]+z*pjmat_full[1][2]+pjmat_full[1][3]
+		// Z-Calc x*pjmat_full[2][0]+y*pjmat_full[2][1]+z*pjmat_full[2][2]+pjmat_full[2][3]
+		return [x*pjmat_full[0][0]+y*pjmat_full[0][1]+z*pjmat_full[0][2]+pjmat_full[0][3],x*pjmat_full[1][0]+y*pjmat_full[1][1]+z*pjmat_full[1][2]+pjmat_full[1][3],x*pjmat_full[2][0]+y*pjmat_full[2][1]+z*pjmat_full[2][2]+pjmat_full[2][3]];
+	}
+	
+	function pj_view_space(coords){
+		out=[];
+		pjmat_full=this.get_pjmat();
+		//Do it for all coordinates in a list
+		for(coord=0;coord<coords.length;coord++){
+			out.add([coords[coord][0]*pjmat_full[0][0]+coords[coord][1]*pjmat_full[0][1]+coords[coord][2]*pjmat_full[0][2]+pjmat_full[0][3],coords[coord][0]*pjmat_full[1][0]+coords[coord][1]*pjmat_full[1][1]+coords[coord][2]*pjmat_full[1][2]+pjmat_full[1][3],coords[coord][0]*pjmat_full[2][0]+coords[coord][1]*pjmat_full[2][1]+coords[coord][2]*pjmat_full[2][2]+pjmat_full[2][3]]);
+		}
+		return out;
+	}
+	
+	function pj_screen_space(x,y,z,sc_width=1.0,sc_height=1.0,round=false){ //Returns point in the form [x,y,z-index] X and Y coordinates are bound on [-1,1], with 0 being dead-center
+		pjmat_full=this.get_pjmat();
+		// X-Calc (x*pjmat_full[0][0]+y*pjmat_full[0][1]+z*pjmat_full[0][2]+pjmat_full[0][3])/(this.h_fov_tan*z_index)
+		// Y-Calc (x*pjmat_full[1][0]+y*pjmat_full[1][1]+z*pjmat_full[1][2]+pjmat_full[1][3])
+		// Z-Calc (x*pjmat_full[2][0]+y*pjmat_full[2][1]+z*pjmat_full[2][2]+pjmat_full[2][3])/(this.v_fov_tan*z_index)
+		z_index=(x*pjmat_full[1][0]+y*pjmat_full[1][1]+z*pjmat_full[1][2]+pjmat_full[1][3]);
+		return [sc_width*(0.5+((x*pjmat_full[0][0]+y*pjmat_full[0][1]+z*pjmat_full[0][2]+pjmat_full[0][3])/(2*this.h_fov_tan*z_index))),sc_height*(0.5+((x*pjmat_full[2][0]+y*pjmat_full[2][1]+z*pjmat_full[2][2]+pjmat_full[2][3])/(2*this.v_fov_tan*z_index))),z_index];
+	}
+	
+	function pj_screen_space(coords,sc_width=1.0,sc_height=1.0,round=false){
+		if(round){
+		pjmat_full=this.get_pjmat();
+		out=[];
+		//Do it for all coordinates in a list
+		for(coord=0;coord<coords.length;coord++){
+			z_index=(coords[coord][0]*pjmat_full[1][0]+coords[coord][1]*pjmat_full[1][1]+coords[coord][2]*pjmat_full[1][2]+pjmat_full[1][3]);
+			/*
+			
+			 
+			*/
+			out.add([Math.floor(sc_width*(0.5+((coords[coord][0]*pjmat_full[0][0]+coords[coord][1]*pjmat_full[0][1]+coords[coord][2]*pjmat_full[0][2]+pjmat_full[0][3])/(2*this.h_fov_tan*z_index)))),Math.floor(sc_height*(0.5+((coords[coord][0]*pjmat_full[2][0]+coords[coord][1]*pjmat_full[2][1]+coords[coord][2]*pjmat_full[2][2]+pjmat_full[2][3])/(2*this.v_fov_tan*z_index)))),z_index]);
+		}
+		return out;
+		}else{
+		pjmat_full=this.get_pjmat();
+		out=[];
+		//Do it for all coordinates in a list
+		for(coord=0;coord<coords.length;coord++){
+			z_index=(coords[coord][0]*pjmat_full[1][0]+coords[coord][1]*pjmat_full[1][1]+coords[coord][2]*pjmat_full[1][2]+pjmat_full[1][3]);
+			out.add([sc_width*(0.5+((coords[coord][0]*pjmat_full[0][0]+coords[coord][1]*pjmat_full[0][1]+coords[coord][2]*pjmat_full[0][2]+pjmat_full[0][3])/(2*this.h_fov_tan*z_index))),sc_height*(0.5+((coords[coord][0]*pjmat_full[2][0]+coords[coord][1]*pjmat_full[2][1]+coords[coord][2]*pjmat_full[2][2]+pjmat_full[2][3])/(2*this.v_fov_tan*z_index))),z_index]);
+		}
+		return out;
+		}
+	}
+	
+	
+	
+	//Local rotations are applied BEFORE all the others 
+	//Global rotations are applied AFTER all the others
+	
+	function rz_global(theta){//Rotates the camera on the plane normal to the GLOBAL z-axis
+		//Good old fashioned matrix multiplication. By hand. Abstractly.
+		//I'm not crying. You're crying.
+		mat_operation = [[Math.cos(theta),-Math.sin(theta),0.0],[Math.sin(theta),Math.cos(theta),0.0],[0.0,0.0,1.0]];
+		mat_clone=this.clone_mat_3d(this.pjmat);
+		for(col_index=0;col_index<3;col_index++){
+			for(row_index=0;row_index<3;row_index++){
+				this.pjmat[row_index][col_index]=(mat_operation[row_index][0]*mat_clone[0][col_index])+(mat_operation[row_index][1]*mat_clone[1][col_index])+(mat_operation[row_index][2]*mat_clone[2][col_index]);
+			}
+		}
+
+	}
+	
+	
+	function ry_global(theta){//Rotates the camera on the plane normal to the GLOBAL y-axis
+		mat_operation = [[Math.cos(theta),0.0,-Math.sin(theta)],[0.0,1.0,0.0],[Math.sin(theta),0.0,Math.cos(theta)]];
+
+		mat_clone=this.clone_mat_3d(this.pjmat);
+		for(col_index=0;col_index<3;col_index++){
+			for(row_index=0;row_index<3;row_index++){
+				this.pjmat[row_index][col_index]=(mat_operation[row_index][0]*mat_clone[0][col_index])+(mat_operation[row_index][1]*mat_clone[1][col_index])+(mat_operation[row_index][2]*mat_clone[2][col_index]);
+			}
+		}
+	}
+	
+	function rx_global(theta){//Rotates the camera on the plane normal to the GLOBAL x-axis
+		mat_operation = [[1.0,0.0,0.0],[0.0,Math.cos(theta),-Math.sin(theta)],[0.0,Math.sin(theta),Math.cos(theta)]];
+		mat_clone=this.clone_mat_3d(this.pjmat);
+		for(col_index=0;col_index<3;col_index++){
+			for(row_index=0;row_index<3;row_index++){
+				this.pjmat[row_index][col_index]=(mat_operation[row_index][0]*mat_clone[0][col_index])+(mat_operation[row_index][1]*mat_clone[1][col_index])+(mat_operation[row_index][2]*mat_clone[2][col_index]);
+			}
+		}
+	}
+	
+	function rx_local(theta){//Rotates the camera on the plane normal to the LOCAL x-axis
+		mat_operation = [[1.0,0.0,0.0],[0.0,Math.cos(theta),-Math.sin(theta)],[0.0,Math.sin(theta),Math.cos(theta)]];
+		mat_clone=this.clone_mat_3d(this.pjmat);
+		for(col_index=0;col_index<3;col_index++){
+			for(row_index=0;row_index<3;row_index++){
+				this.pjmat[row_index][col_index]=(mat_clone[row_index][0]*mat_operation[0][col_index])+(mat_clone[row_index][1]*mat_operation[1][col_index])+(mat_clone[row_index][2]*mat_operation[2][col_index]);
+			}
+		}
+	}
+	
+	function rz_local(theta){//Rotates the camera on the plane normal to the GLOBAL z-axis
+		//Good old fashioned matrix multiplication. By hand. Abstractly.
+		//I'm not crying. You're crying.
+		mat_operation = [[Math.cos(theta),-Math.sin(theta),0.0],[Math.sin(theta),Math.cos(theta),0.0],[0.0,0.0,1.0]];
+		mat_clone=this.clone_mat_3d(this.pjmat);
+		for(col_index=0;col_index<3;col_index++){
+			for(row_index=0;row_index<3;row_index++){
+				this.pjmat[row_index][col_index]=(mat_clone[row_index][0]*mat_operation[0][col_index])+(mat_clone[row_index][1]*mat_operation[1][col_index])+(mat_clone[row_index][2]*mat_operation[2][col_index]);
+			}
+		}
+
+	}
+	
+	function ry_local(theta){//Rotates the camera on the plane normal to the LOCAL y-axis
+		mat_operation = [[Math.cos(theta),0.0,-Math.sin(theta)],[0.0,1.0,0.0],[Math.sin(theta),0.0,Math.cos(theta)]];
+
+		mat_clone=this.clone_mat_3d(this.pjmat);
+		for(col_index=0;col_index<3;col_index++){
+			for(row_index=0;row_index<3;row_index++){
+				this.pjmat[row_index][col_index]=(mat_clone[row_index][0]*mat_operation[0][col_index])+(mat_clone[row_index][1]*mat_operation[1][col_index])+(mat_clone[row_index][2]*mat_operation[2][col_index]);
+			}
+		}
+	}
+	
+	/*
+	function rz_local(theta){//Rotates the camera on the plane normal to the LOCAL z-axis
+		mat_operation = [[Math.cos(theta),-Math.sin(theta),0.0],[Math.sin(theta),Math.cos(theta),0.0],[0.0,0.0,1.0]];
+		mat_clone=this.clone_mat_3d(this.pjmat);
+		for(col_index=0;col_index<3;col_index++){
+			for(row_index=0;row_index<3;row_index++){
+				this.pjmat[row_index][col_index]=(mat_clone[row_index][0]*mat_operation[0][col_index])+(mat_clone[row_index][1]*mat_operation[1][col_index])+(mat_clone[row_index][2]*mat_operation[2][col_index]);
+			}
+		}
+	}
+	
+	
+	function ry_local(theta){//Rotates the camera on the plane normal to the LOCAL y-axis
+		mat_operation = [[Math.cos(theta),0.0,-Math.sin(theta)],[0.0,1.0,0.0],[Math.sin(theta),0.0,Math.cos(theta)]];
+		mat_clone=this.clone_mat_3d(this.pjmat);
+		for(col_index=0;col_index<3;col_index++){
+			for(row_index=0;row_index<3;row_index++){
+				this.pjmat[row_index][col_index]=(mat_clone[row_index][0]*mat_operation[0][col_index])+(mat_clone[row_index][1]*mat_operation[1][col_index])+(mat_clone[row_index][2]*mat_operation[2][col_index]);
+			}
+		}
+	}
+	
+	function rx_local(theta){//Rotates the camera on the plane normal to the LOCAL y-axis
+		mat_operation = [[Math.cos(theta)+((this.pjmat[0][0]*this.pjmat[0][0])*(1-Math.cos(theta))),((this.pjmat[0][0]*this.pjmat[1][0])*(1-Math.cos(theta)))-(Math.sin(theta)*this.pjmat[2][0]),((this.pjmat[0][0]*this.pjmat[2][0])*(1-Math.cos(theta)))+(Math.sin(theta)*this.pjmat[1][0])],
+		[((this.pjmat[0][0]*this.pjmat[1][0])*(1-Math.cos(theta)))+(Math.sin(theta)*this.pjmat[2][0]),Math.cos(theta)+((this.pjmat[1][0]*this.pjmat[1][0])*(1-Math.cos(theta))),((this.pjmat[2][0]*this.pjmat[1][0])*(1-Math.cos(theta)))-(Math.sin(theta)*this.pjmat[0][0])],
+		[((this.pjmat[2][0]*this.pjmat[0][0])*(1-Math.cos(theta)))-(Math.sin(theta)*this.pjmat[1][0]),((this.pjmat[2][0]*this.pjmat[1][0])*(1-Math.cos(theta)))+(Math.sin(theta)*this.pjmat[0][0]),Math.cos(theta)+((this.pjmat[2][0]*this.pjmat[2][0])*(1-Math.cos(theta)))]];
+		mat_clone=this.clone_mat_3d(this.pjmat);
+		for(col_index=0;col_index<3;col_index++){
+			for(row_index=0;row_index<3;row_index++){
+				this.pjmat[row_index][col_index]=(mat_operation[row_index][0]*mat_clone[0][col_index])+(mat_operation[row_index][1]*mat_clone[1][col_index])+(mat_operation[row_index][2]*mat_clone[2][col_index]);
+			}
+		}
+	}*/
+	
+	function reset(){
+		this.pjmat=[[1.0,0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,1.0]];
+		this.x=0;
+		this.y=0;
+		this.z=0;
+	}
+	
+	
+	
+	
+	
+	
+	
+
+
+}

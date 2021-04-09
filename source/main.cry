@@ -1,0 +1,176 @@
+﻿import Game;
+import Graphics2D;
+import Math;
+
+
+
+function main(){
+	window=new Game.GameWindow("Sterling v1 Test",30,600,600);
+  cam = new camera();
+  renderman=new vertexrenderer();
+  oldlist = [[1,4,5],[9,2,3],[1,8,7],[7,3,1],[9,3,2]];
+  print(oldlist);
+  newlist=[];
+  newlist.add(0);
+  
+  
+  print(newlist);
+  for(index=0;index<newlist.length;index++){
+  print(oldlist[newlist[index]]);
+  }
+  
+  
+  
+  
+	rz=0;
+  cube = [
+  [-1.0,4.0,-1.0],
+  [1.0,4.0,1.0],
+  [1.0,4.0,-1.0],
+  [-1.0,4.0,1.0],
+   [-1.0,6.0,-1.0],
+  [1.0,6.0,1.0],
+  [1.0,6.0,-1.0],
+  [-1.0,6.0,1.0]
+  ];
+  faces = [[0,1,2],[0,1,3],[4,5,6],[4,5,7]];
+  a_down=false;
+  s_down=false;
+  w_down=false;
+  d_down=false;
+  shift_down=false;
+  space_down=false;
+  up_down=false;
+  down_down=false;
+  left_down=false;
+  right_down=false;
+	while(true){
+		events=window.pumpEvents();
+		for(event:events){
+			if(event.type==Game.EventType.QUIT){
+				return;
+			}
+			
+			else if(event.type==Game.EventType.KEY_DOWN){
+				switch(event.key){
+				case Game.KeyboardKey.A:
+				a_down=true;
+				break;
+				case Game.KeyboardKey.D:
+				d_down=true;
+				break;
+				case Game.KeyboardKey.W:
+				w_down=true;
+				break;
+				case Game.KeyboardKey.S:
+				s_down=true;
+				break;
+				case Game.KeyboardKey.SHIFT:
+				shift_down=true;
+				break;
+				case Game.KeyboardKey.SPACE:
+				space_down=true;
+				break;
+				case Game.KeyboardKey.UP:
+				up_down=true;
+				break;
+				case Game.KeyboardKey.DOWN:
+				down_down=true;
+				break;
+				case Game.KeyboardKey.LEFT:
+				left_down=true;
+				break;
+				case Game.KeyboardKey.RIGHT:
+				right_down=true;
+				break;
+				case Game.KeyboardKey.P:
+				cam.reset();
+				break;
+				}
+			}
+			else if(event.type==Game.EventType.KEY_UP){
+				switch(event.key){
+				case Game.KeyboardKey.A:
+				a_down=false;
+				break;
+				case Game.KeyboardKey.D:
+				d_down=false;
+				break;
+				case Game.KeyboardKey.W:
+				w_down=false;
+				break;
+				case Game.KeyboardKey.S:
+				s_down=false;
+				break;
+				case Game.KeyboardKey.SHIFT:
+				shift_down=false;
+				break;
+				case Game.KeyboardKey.SPACE:
+				space_down=false;
+				break;
+				case Game.KeyboardKey.UP:
+				up_down=false;
+				break;
+				case Game.KeyboardKey.DOWN:
+				down_down=false;
+				break;
+				case Game.KeyboardKey.LEFT:
+				left_down=false;
+				break;
+				case Game.KeyboardKey.RIGHT:
+				right_down=false;
+				break;
+				}
+			}
+		}
+		if(a_down){
+			cam.change_y(-0.1*Math.cos(rz+(Math.PI/2)));
+			cam.change_x(-0.1*Math.sin(rz+(Math.PI/2)));
+		}
+		if(d_down){
+			cam.change_y(0.1*Math.cos(rz+(Math.PI/2)));
+			cam.change_x(0.1*Math.sin(rz+(Math.PI/2)));
+		}
+		if(w_down){
+			cam.change_y(0.1*Math.cos(rz));
+			cam.change_x(0.1*Math.sin(rz));
+		}
+		if(s_down){
+			cam.change_y(-0.1*Math.cos(rz));
+			cam.change_x(-0.1*Math.sin(rz));
+		}
+		if(space_down){
+			cam.change_z(-0.1);
+		}
+		if(shift_down){
+			cam.change_z(0.1);
+		}
+		if(left_down){
+			cam.rz_local(-0.1);
+			rz-=0.1;
+		}
+		if(right_down){
+			cam.rz_local(0.1);
+			rz+=0.1;
+		}
+		if(up_down){
+			cam.rx_global(0.1);
+		}
+		if(down_down){
+			cam.rx_global(-0.1);
+		}
+		
+		Graphics2D.Draw.fill(0,0,0);
+		renderman.draw_scene(cam,cube,faces);
+		
+		projected=cam.pj_screen_space(cube,600,600,true);
+		for(i=0;i<projected.length;i++){
+			if(projected[i][2]>=0.0){
+			Graphics2D.Draw.rectangle(projected[i][0]-5,projected[i][1]-5,10,10,255,255,255);
+			}
+		}
+		
+		window.clockTick();
+	}
+ 
+}
