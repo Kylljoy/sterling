@@ -4,20 +4,13 @@ import Math;
 
 
 
+
+
 function main(){
 	window=new Game.GameWindow("Sterling v1 Test",30,600,600);
   cam = new camera();
   renderman=new vertexrenderer();
-  oldlist = [[1,4,5],[9,2,3],[1,8,7],[7,3,1],[9,3,2]];
-  print(oldlist);
-  newlist=[];
-  newlist.add(0);
-  
-  
-  print(newlist);
-  for(index=0;index<newlist.length;index++){
-  print(oldlist[newlist[index]]);
-  }
+
   
   
   
@@ -162,13 +155,16 @@ function main(){
 		
 		Graphics2D.Draw.fill(0,0,0);
 		renderman.draw_scene(cam,cube,faces);
-		
-		projected=cam.pj_screen_space(cube,600,600,true);
-		for(i=0;i<projected.length;i++){
+		Graphics2D.Draw.line(150,150,150,450,2,255,255,255);
+		Graphics2D.Draw.line(450,450,150,450,2,255,255,255);
+		Graphics2D.Draw.line(450,450,450,150,2,255,255,255);
+		Graphics2D.Draw.line(150,150,450,150,2,255,255,255);
+		projected=cam.pj_screen_space(cube,300,300,true);
+	/*	for(i=0;i<projected.length;i++){
 			if(projected[i][2]>=0.0){
-			Graphics2D.Draw.rectangle(projected[i][0]-5,projected[i][1]-5,10,10,255,255,255);
+			Graphics2D.Draw.rectangle(150+projected[i][0]-5,150+projected[i][1]-5,10,10,((i+0.0)/projected.length)*255,255,(1.0-(i+0.0)/projected.length)*255);
 			}
-		}
+		}*/
 		
 		window.clockTick();
 	}
