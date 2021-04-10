@@ -25,75 +25,35 @@ class vertexrenderer{
 		}
 	}
 
-
-	
+	function generate_key(a,b,c){
+		coord_group_=[Math.floor(a*1000),Math.floor(b*1000),Math.floor(c*1000)];
+		coord_group_.sort();
+		coord_group_.reverse();
+		return coord_group_.join("/");
+	}
 	
 	function draw_scene(cam,coords,polys,extra_data=[]){ 
 	//Simple Painter's Alg with no Overlap Handling
 	zindex=[]; //Each entry refers to an index in the polygon list, sorted from backmost to frontmost
 	//The z-index is calculated by averaging. Nothing more, nothing less
 	screen_coords=cam.pj_screen_space(coords,this.screenwidth,this.screenheight,true);
-	//Sort the z-indexes
-	getZIndexes=()=>zindex.map((m)=>(polys[m])).map((m)=>(m.map((q)=>(screen_coords[q][2])))).map((l)=>((l[0]+l[1]+l[2])/3));
+	zindex=[];
+	for(i=0;i<polys.length;i++){
+		zindex.add(i);
+	}
+	//Sort the z-indexes by z-distance
+	zindex.sort((polygon_index_)=>(Math.max(Math.max(screen_coords[polys[polygon_index_][0]][2],screen_coords[polys[polygon_index_][1]][2]),screen_coords[polys[polygon_index_][2]][2])));
 
-	for(polygon_index=0;polygon_index<polys.length;polygon_index++){
-		max_index = zindex.length-1;
-		min_index = 0;
-		if(screen_coords[polys[polygon_index][0]][2]<near_clip&&screen_coords[polys[polygon_index][1]][2]<near_clip&&screen_coords[polys[polygon_index][2]][2]<near_clip){
-			continue;	
-		}else{
-		if(zindex.length==0){
-			zindex.add(polygon_index);
-			continue;
-		}
-		inserted_z_index=(screen_coords[polys[polygon_index][0]][2]+screen_coords[polys[polygon_index][1]][2]+screen_coords[polys[polygon_index][2]][2])/3;
-		iteration_counter=0;
-		while(true){
-			if(iteration_counter>max_sort_iter_count){
-				print(getZIndexes());
-				print(inserted_z_index);
-				print(min_index);
-				print(max_index);
-				break;
-			}
-			test_index=(min_index+max_index)/2;
-			test_z_index=(screen_coords[polys[zindex[test_index]][0]][2]+screen_coords[polys[zindex[test_index]][1]][2]+screen_coords[polys[zindex[test_index]][2]][2])/3;
-			if(max_index<=min_index)
-			{
-				if(inserted_z_index>test_z_index){
-					zindex.insert(min_index+1,polygon_index);
-				}else{
-				zindex.insert(min_index,polygon_index);
-				}
-				
-				break;
-			}
-		
-			if(test_z_index>inserted_z_index){
-				max_index=test_index-1;
-				if(max_index<=0){
-					zindex.insert(0,polygon_index);
-				}
-			}else if(test_z_index<inserted_z_index){
-				min_index=test_index+1;
-				if(min_index>=zindex.length-1){
-					zindex.add(polygon_index);
-				}
-			}else if(test_z_index==inserted_z_index){
-				zindex.insert(test_index,polygon_index);
-				break;
-			}
-			iteration_counter++;
-		}
-		}
-			
-		}
+	zindex=zindex.filter((polygon_index_)=>(near_clip<Math.max(Math.max(screen_coords[polys[polygon_index_][0]][2],screen_coords[polys[polygon_index_][1]][2]),screen_coords[polys[polygon_index_][2]][2])));
+	zindex.reverse();
+	for(polygon_index : zindex){
 
-		for(polygon_index : zindex){
 			polygon_screen_coords = []; 
 			vertex_a=screen_coords[polys[polygon_index][0]];
 			vertex_b=screen_coords[polys[polygon_index][1]];
 			vertex_c=screen_coords[polys[polygon_index][2]];
+			
+			
 			if(vertex_a[2]<near_clip||vertex_b[2]<near_clip||vertex_c[2]<near_clip){
 				//Manually assemble a polygon with cliped vertices
 				//Determines which vertices have been clipped out of view
@@ -141,7 +101,6 @@ class vertexrenderer{
 		
 		
 	}
-
 
 	function poly_shader(polygon_screen_coords,polygon_index,extra_data){
 		Graphics2D.Draw.quad(this.x_offset+polygon_screen_coords[0][0],this.y_offset+polygon_screen_coords[0][1],
