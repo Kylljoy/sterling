@@ -1,50 +1,63 @@
 import Graphics2D;
 import Math;
-const max_sort_iter_count=20;
-const near_clip=0.01;
 
-class vertexrenderer{
-	
-	field screenwidth=300;
-	field screenheight=300;
-	field x_offset=150;
-	field y_offset=150;
-	
-	function tri_inter(ax,ay,bx,by,cx,cy,px,py){ //Triangular Iterpolation
-		a =((ax-bx)*(ay-py))-((ay-by)*(ax-px)); //Area of Opposite-C
-		b =((cx-ax)*(cy-py))-((cy-ay)*(cx-px));  //Area of Opposite-B
-		c =((bx-cx)*(by-py))-((by-cy)*(bx-px)); //Area of Opposite-A
-		if((a>=0&&b>=0&&c>=0)||(a<=0&&b<=0&&c<=0)){
-			d=((ax-bx)*(by-cy))-((ay-by)*(bx-cx));
-			if(d==0){
-				return [0,0,0];
+class advancedvertexrenderer : vertexrenderer{
+	//1 if A further than B, -1 if B further than A, 0 if the same
+	//Args = polys, screen_cooords
+	function buggyLambda(a_,b_,args){
+		polys = args[0];
+		screen_coords = args[1];
+		lista_=[screen_coords[polys[a_][0]][2],screen_coords[polys[a_][1]][2],screen_coords[polys[a_][2]][2]];
+		listb_=[screen_coords[polys[b_][0]][2],screen_coords[polys[b_][1]][2],screen_coords[polys[b_][2]][2]];
+		lista_.sort();
+		listb_.sort();
+		for(index_=2;index_>0;index_--){
+			if(lista_[index_]>listb_[index_]){
+				return true;
+			}if(lista_[index_]<listb_[index_]){
+				return false;
 			}
-			return [a/d,b/d,c/d];
+		}
+		return false;
+	}
+	function splitSort(list,comparison,comparison_args=[]){
+		if(list.length<=1){
+			return list;
+		}else if(list.length==2){
+			if(comparison(list[0],list[1],comparison_args)){
+				return [list[0],list[1]];
+			}else{
+				return [list[1],list[0]];
+			}
 		}else{
-			return null;
+			leftSide = list[:-1].filter((comparison_)=>(!comparison(list[-1],comparison_,comparison_args)));
+			rightSide = list[:-1].filter((comparison_)=>(comparison(list[-1],comparison_,comparison_args)));
+			left=this.splitSort(leftSide,comparison,comparison_args);
+			right=this.splitSort([list[-1]]+rightSide,comparison,comparison_args);
+			return left+right;
 		}
 	}
 
-	function generate_key(a,b,c){
-		coord_group_=[Math.floor(a*1000),Math.floor(b*1000),Math.floor(c*1000)];
-		coord_group_.sort();
-		coord_group_.reverse();
-		return coord_group_.join("/");
-	}
 	
+
 	function draw_scene(cam,coords,polys,extra_data=[]){ 
-	//Simple Painter's Alg with no Overlap Handling
-	zindex=[]; //Each entry refers to an index in the polygon list, sorted from backmost to frontmost
-	//The z-index is calculated by backmost vertex. Nothing more, nothing less
-	screen_coords=cam.pj_screen_space(coords,this.screenwidth,this.screenheight,true);
+	if(polys.length<=1){
+		return;
+	}
+	zindex=[];
 	for(i=0;i<polys.length;i++){
 		zindex.add(i);
 	}
+	//Simple Painter's Alg with no Overlap Handling
+	//Each entry refers to an index in the polygon list, sorted from backmost to frontmost
+	screen_coords=cam.pj_screen_space(coords,this.screenwidth,this.screenheight,true);
 	//Sort the z-indexes by z-distance
-	zindex.sort((polygon_index_)=>(Math.max(Math.max(screen_coords[polys[polygon_index_][0]][3],screen_coords[polys[polygon_index_][1]][3]),screen_coords[polys[polygon_index_][2]][3])));
 
+	//Sort the z-indexes by z-distance
+	zindex = this.splitSort(zindex,this.buggyLambda,[polys,screen_coords]);
 	zindex=zindex.filter((polygon_index_)=>(near_clip<Math.max(Math.max(screen_coords[polys[polygon_index_][0]][2],screen_coords[polys[polygon_index_][1]][2]),screen_coords[polys[polygon_index_][2]][2])));
-	zindex.reverse();
+	//zindex.reverse();
+	
 	for(polygon_index : zindex){
 
 			polygon_screen_coords = []; 
@@ -101,19 +114,6 @@ class vertexrenderer{
 		
 	}
 
-	function poly_shader(polygon_screen_coords,polygon_index,extra_data){
-		Graphics2D.Draw.quad(this.x_offset+polygon_screen_coords[0][0],this.y_offset+polygon_screen_coords[0][1],
-		this.x_offset+polygon_screen_coords[1][0],this.y_offset+polygon_screen_coords[1][1],
-		this.x_offset+polygon_screen_coords[2][0],this.y_offset+polygon_screen_coords[2][1],
-		this.x_offset+polygon_screen_coords[3][0],this.y_offset+polygon_screen_coords[3][1],
-		255,255,255);
 
-	}
-
-
-	
-	function polish(poly,interpol){
-		return [255,255,255];
-	}
 
 }

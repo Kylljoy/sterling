@@ -3,13 +3,36 @@ import Graphics2D;
 import Math;
 
 
+//comparison takes args (a,b), true if A is before, false if A is after
+function splitSort(list,comparison){
+		pivot = list.length-1;
+		if(list.length<=1){
+			return list;
+		}else if(list.length==2){
+			if(comparison(list[0],list[1])){
+				return [list[0],list[1]];
+			}else{
+				return [list[1],list[0]];
+			}
+		}else{
+			leftSide = list[:-1].filter((comparison_)=>(!comparison(list[-1],comparison_)));
+			rightSide = list[:-1].filter((comparison_)=>(comparison(list[-1],comparison_)));
+			left=splitSort(leftSide,comparison);
+			right=splitSort([list[-1]]+rightSide,comparison);
+			return left+right;
+		}
+}
 
-
+function simpleComparison(a,b){
+	return a<b;
+}
 
 function main(){
+
+	
 	window=new Game.GameWindow("Sterling v1 Test",30,600,600);
   cam = new camera();
-  renderman=new vertexrenderer();
+  renderman=new advancedvertexrenderer();
   renderwoman = new coloredrenderer();
   
   

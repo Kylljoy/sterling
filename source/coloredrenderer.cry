@@ -1,5 +1,5 @@
 import Graphics2D;
-class coloredrenderer : vertexrenderer{
+class coloredrenderer : advancedvertexrenderer{
 
     function poly_shader(polygon_screen_coords,polygon_index,extra_data){
 		Graphics2D.Draw.quad(this.x_offset+polygon_screen_coords[0][0],this.y_offset+polygon_screen_coords[0][1],
