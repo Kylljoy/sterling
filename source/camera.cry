@@ -109,7 +109,6 @@ class camera{
 		out=[];
 		//Do it for all coordinates in a list
 		for(coord=0;coord<coords.length;coord++){
-			
 			z_index=(coords[coord][0]*pjmat_full[1][0]+coords[coord][1]*pjmat_full[1][1]+coords[coord][2]*pjmat_full[1][2]+pjmat_full[1][3]);
 			x_=(coords[coord][0]*pjmat_full[0][0]+coords[coord][1]*pjmat_full[0][1]+coords[coord][2]*pjmat_full[0][2]+pjmat_full[0][3]);
 			y_=(coords[coord][0]*pjmat_full[2][0]+coords[coord][1]*pjmat_full[2][1]+coords[coord][2]*pjmat_full[2][2]+pjmat_full[2][3]);

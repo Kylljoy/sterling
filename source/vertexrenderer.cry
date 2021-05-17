@@ -24,13 +24,6 @@ class vertexrenderer{
 			return null;
 		}
 	}
-
-	function generate_key(a,b,c){
-		coord_group_=[Math.floor(a*1000),Math.floor(b*1000),Math.floor(c*1000)];
-		coord_group_.sort();
-		coord_group_.reverse();
-		return coord_group_.join("/");
-	}
 	
 	function draw_scene(cam,coords,polys,extra_data=[]){ 
 	//Simple Painter's Alg with no Overlap Handling
@@ -102,11 +95,6 @@ class vertexrenderer{
 	}
 
 	function poly_shader(polygon_screen_coords,polygon_index,extra_data){
-		Graphics2D.Draw.quad(this.x_offset+polygon_screen_coords[0][0],this.y_offset+polygon_screen_coords[0][1],
-		this.x_offset+polygon_screen_coords[1][0],this.y_offset+polygon_screen_coords[1][1],
-		this.x_offset+polygon_screen_coords[2][0],this.y_offset+polygon_screen_coords[2][1],
-		this.x_offset+polygon_screen_coords[3][0],this.y_offset+polygon_screen_coords[3][1],
-		255,255,255);
 
 	}
 

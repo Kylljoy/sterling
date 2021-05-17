@@ -1,12 +1,16 @@
 import Graphics2D;
-class coloredrenderer : advancedvertexrenderer{
+import Math;
+class shadedrenderer : advancedvertexrenderer{
 
     function poly_shader(polygon_screen_coords,polygon_space_coords,polygon_index,extra_data){
+        //Light Vector is extra_data[1]
+		shading=1.0;
+		shading=(advancedvertexrenderer.dp(advancedvertexrenderer.surfaceNormal(polygon_space_coords),extra_data[1]));
 		Graphics2D.Draw.quad(this.x_offset+polygon_screen_coords[0][0],this.y_offset+polygon_screen_coords[0][1],
 		this.x_offset+polygon_screen_coords[1][0],this.y_offset+polygon_screen_coords[1][1],
 		this.x_offset+polygon_screen_coords[2][0],this.y_offset+polygon_screen_coords[2][1],
 		this.x_offset+polygon_screen_coords[3][0],this.y_offset+polygon_screen_coords[3][1],
-		extra_data[0][polygon_index][0],extra_data[0][polygon_index][1],extra_data[0][polygon_index][2]);
+		extra_data[0][polygon_index][0]*shading,extra_data[0][polygon_index][1]*shading,extra_data[0][polygon_index][2]*shading);
 
 	}
 
